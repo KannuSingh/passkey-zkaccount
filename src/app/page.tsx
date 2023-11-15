@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Avatar, Box, Button, ButtonGroup, Container, Divider, Flex, Heading, Icon, Spacer, Stack, Text, createIcon, useColorMode, useColorModeValue, useDisclosure, useToast } from '@chakra-ui/react'
 import UserRegistrationModal from '@/components/PasskeyCreationModal';
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
+import { BiLinkExternal } from "react-icons/bi";
 import { Link } from '@chakra-ui/next-js';
 import UserLoginModal from '@/components/UserLoginModal';
 import { logger } from '@/lib/logger';
@@ -14,32 +15,24 @@ import { useLocalStorage } from "usehooks-ts";
 import {  Contract, ethers } from "ethers"
 import { getBlockExplorerURLByChainId, getDemoNFTContractAddressByChainId, getEntryPointContractAddressByChainId, getPimlicoChainNameByChainId } from '@/lib/config';
 import { useSession } from '@/hooks/useSession';
-import { formatTime } from '../utils';
+import { formatTime, getNonceValue } from '../utils';
 import { getDemoNFTContract } from '@/lib/demoNFT';
 import generateProof from '@/lib/zkSessionAccountProof';
 import UserProfile from '@/components/UserProfile';
+import { useState } from 'react';
 
 export default function Home() {
   const toast = useToast();
   const { colorMode, toggleColorMode } = useColorMode()
   const { isOpen:isOpenRegisterModal, onOpen:onOpenRegisterModal, onClose:onCloseRegisterModal } = useDisclosure()
   const { isOpen:isOpenLoginModal, onOpen:onOpenLoginModal, onClose:onCloseLoginModal } = useDisclosure()
-  const [usernamePasskeyInfoMap,setUsernamePasskeyInfoMap]= useLocalStorage("usernamePasskeyInfoMap",{})
+  const [usernamePasskeyInfoMap,]= useLocalStorage("usernamePasskeyInfoMap",{})
   const {session,timeRemaining,identity,username} = useSession()
-
-  const getNonceValue = async (c:Contract) => {
-    let nonceValue = 0;
-    try {
-      nonceValue = await c['getNonce']();
-      
-    } catch (error) {
-      logger.error("Error fetching nonce:", error);
-    }finally{
-      return nonceValue
-    }
-  }
+  const [isLoading,setLoading] = useState(false)
+  const [txLink,setTxLink] = useState<string>()
 
   const handleMint = async () => {
+    setLoading(true)
     try{
       if (usernamePasskeyInfoMap[username] && usernamePasskeyInfoMap[username].publicKeyAsHex) {
       const publicKey = Passkey.hex2buf(usernamePasskeyInfoMap[username].publicKeyAsHex);
@@ -140,6 +133,7 @@ export default function Home() {
         const txHash = receipt.receipt.transactionHash
         const blockExplorer = getBlockExplorerURLByChainId(chainId)
         logger.info(`UserOperation included: ${blockExplorer}/tx/${txHash}`)
+        setTxLink(`${blockExplorer}/tx/${txHash}`)
         toast({
           title: "Successfully minted DEMO NFT",
           description: "",
@@ -154,7 +148,7 @@ export default function Home() {
     }}catch(e){
       console.error(e)
     }
-   
+   setLoading(false)
   };
 
   return (
@@ -213,6 +207,7 @@ export default function Home() {
                 alignSelf={'center'}
                 position={'relative'}>
                   <Button
+                    isLoading = {isLoading}
                     colorScheme={'green'}
                     bg={'green.400'}
                     rounded={'full'}
@@ -223,6 +218,9 @@ export default function Home() {
                     }}>
                     MintNFT
                   </Button>
+                  {txLink && <Link href={txLink} isExternal>
+                              Transaction link <Icon as={BiLinkExternal} mx='2px' />
+                            </Link> }
               </Stack>
               :<Stack
                 direction={'column'}
