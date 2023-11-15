@@ -229,9 +229,9 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
               <option value={5}>5 Min</option>
             </Select>
             
-            <FormLabel>Email</FormLabel>
+            <FormLabel>Username</FormLabel>
             <Input type='email' value={username} onChange={(e) => {setUsername(e.target.value.toLowerCase())}}/>
-            <FormHelperText>Enter email to identify your account.</FormHelperText>
+            <FormHelperText>Enter username to identify your account.</FormHelperText>
             
             {/* <FormLabel htmlFor='remember-session-settings' mb='0'>
               Remember Settings?

@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Avatar, Box, Button, ButtonGroup, Container, Divider, Flex, Heading, Icon, Spacer, Stack, Text, createIcon, useColorMode, useColorModeValue, useDisclosure, useToast } from '@chakra-ui/react'
+import { Avatar, Box, Button, ButtonGroup, Container, Divider, Flex, HStack, Heading, Icon, List, ListItem, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, OrderedList, Spacer, Stack, Text, createIcon, useColorMode, useColorModeValue, useDisclosure, useToast } from '@chakra-ui/react'
 import UserRegistrationModal from '@/components/PasskeyCreationModal';
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { BiLinkExternal } from "react-icons/bi";
@@ -26,6 +26,7 @@ export default function Home() {
   const { colorMode, toggleColorMode } = useColorMode()
   const { isOpen:isOpenRegisterModal, onOpen:onOpenRegisterModal, onClose:onCloseRegisterModal } = useDisclosure()
   const { isOpen:isOpenLoginModal, onOpen:onOpenLoginModal, onClose:onCloseLoginModal } = useDisclosure()
+  const { isOpen:isLearnMoreModalOpen,  onOpen:onOpenLearnMoreModal, onClose:onCloseLearnMoreModal } = useDisclosure()
   const [usernamePasskeyInfoMap,]= useLocalStorage("usernamePasskeyInfoMap",{})
   const {session,timeRemaining,identity,username} = useSession()
   const [isLoading,setLoading] = useState(false)
@@ -183,7 +184,7 @@ export default function Home() {
             as={Box}
             textAlign={'center'}
             spacing={{ base: 8, md: 14 }}
-            py={{ base: 20, md: 36 }}>
+            py={{ base: 16, md: 28 }}>
             <Heading
               fontWeight={600}
               fontSize={{ base: '2xl', sm: '4xl', md: '6xl' }}
@@ -194,88 +195,97 @@ export default function Home() {
               </Text>
               zkAccount
             </Heading>
-            
-            <Text color={'gray.500'}>
-              {`Utilizing zero-knowledge proofs in session-based access control mechanisms can provide a robust solution for achieving a harmonious blend of user security and a frictionless user experience.`}
-              {`This application serves as an example demonstrating a zk session-based smart contract account, eliminating the need for third-party involvement. `}
-            </Text>
-            {session  
-              ?<Stack
-                direction={'column'}
-                spacing={3}
-                align={'center'}
-                alignSelf={'center'}
-                position={'relative'}>
-                  <Button
-                    isLoading = {isLoading}
-                    colorScheme={'green'}
-                    bg={'green.400'}
-                    rounded={'full'}
-                    px={6}
-                    onClick={handleMint}
-                    _hover={{
-                      bg: 'green.500',
-                    }}>
-                    MintNFT
+            <Stack textAlign={'start'} spacing={5}>
+              <Stack spacing={2}>
+                <Text >
+                  {`Passkey X zk account is an ERC-4337 account that incorporates two powerful authorization mechanisms, Secp256r1 signatures and zero-knowledge proofs of commitment Id.`}
+                </Text>
+                <Text>
+                  {`Use of zk commitment id ensures a secure and seamless user experience without relying on any third-party session key intermediaries. `}
+                  <Button variant={'link'} colorScheme={'blue'} size={'sm'} onClick={onOpenLearnMoreModal}>
+                    Learn more
                   </Button>
-                  {txLink && <Link href={txLink} isExternal>
-                              Transaction link <Icon as={BiLinkExternal} mx='2px' />
-                            </Link> }
+                </Text>
               </Stack>
-              :<Stack
-                direction={'column'}
-                spacing={3}
-                align={'center'}
-                alignSelf={'center'}
-                position={'relative'}>
-                  <Stack direction={"row"}>
-                    <Button colorScheme={'green'}  bg={'green.400'}
-                      rounded={'full'} px={6} onClick={onOpenRegisterModal} 
-                      _hover={{  bg: 'green.500', }}>
-                      Create Passkey
-                    </Button>
-                    {/* <Button colorScheme={'green'}  bg={'green.400'}
-                      rounded={'full'} px={6}
-                      onClick={handlePasskeyAccountCreation}
-                      _hover={{ bg: 'green.500', }}>
-                      Sign up
-                    </Button> */}
+              {session  
+                ?<Stack
+                  direction={'column'}
+                  spacing={3}
+                  align={'center'}
+                  alignSelf={'center'}
+                  position={'relative'}>
                     <Button
+                      isLoading = {isLoading}
                       colorScheme={'green'}
                       bg={'green.400'}
                       rounded={'full'}
                       px={6}
-                      onClick={onOpenLoginModal}
+                      onClick={handleMint}
                       _hover={{
                         bg: 'green.500',
                       }}>
-                      Login w/Passkey
+                      MintNFT
                     </Button>
-                  </Stack>
-                  <Button variant={'link'} colorScheme={'blue'} size={'sm'}>
-                  Learn more
-                </Button>
-              </Stack>
-            }
+                    {txLink && <Link href={txLink} isExternal>
+                                Transaction link <Icon as={BiLinkExternal} mx='2px' />
+                              </Link> }
+                </Stack>
+                :<Stack
+                  direction={'column'}
+                  spacing={3}
+                  align={'center'}
+                  alignSelf={'center'}
+                  position={'relative'}>
+                    <Stack direction={"row"}>
+                      <Button colorScheme={'green'}  bg={'green.400'}
+                        rounded={'full'} px={6} onClick={onOpenRegisterModal} 
+                        _hover={{  bg: 'green.500', }}>
+                        Create Passkey
+                      </Button>
+                      {/* <Button colorScheme={'green'}  bg={'green.400'}
+                        rounded={'full'} px={6}
+                        onClick={handlePasskeyAccountCreation}
+                        _hover={{ bg: 'green.500', }}>
+                        Sign up
+                      </Button> */}
+                      <Button
+                        colorScheme={'green'}
+                        bg={'green.400'}
+                        rounded={'full'}
+                        px={6}
+                        onClick={onOpenLoginModal}
+                        _hover={{
+                          bg: 'green.500',
+                        }}>
+                        Login w/Passkey
+                      </Button>
+                    </Stack>
+                    
+                </Stack>
+              }
+              
+            </Stack>
           </Stack>
           <UserRegistrationModal isOpen={isOpenRegisterModal} onOpen={onOpenRegisterModal} onClose={onCloseRegisterModal} />
           <UserLoginModal isOpen={isOpenLoginModal} onOpen={onOpenLoginModal} onClose={onCloseLoginModal} />
-        </Container>
+          <LearnMoreContent isOpen={isLearnMoreModalOpen} onClose={onCloseLearnMoreModal} />
+        
         
         
         
         {/* footer */} 
         <Flex direction={"column"} alignItems={"center"} gap={2}>
-          <p className="text-sm mb-4 text-center" >
-            {`Feel free to explore it and don't hesitate to reach out to `}
-            <span className="font-bold">@kdsinghsaini</span>
+          <Text textAlign={'center'} mt={4}>
+            {`Explore this application as a practical example showcasing a passkey and zk 
+            commitmentId smart contract account. Reach out to `}<Text as={'b'}>{`@kdsinghsaini`}</Text>
             {` on Telegram or Twitter for any feedback.`}
-          </p>
-          <p> Sponsored By{' '}
+          </Text>
+          
+          <Text> Sponsored By{' '}
             <Link href="https://www.pimlico.io" color='blue.400' _hover={{ color: 'blue.500' }}>
               Pimlico
             </Link>
-          </p>
+          </Text>
           <Box bgColor={useColorModeValue('gray.800', '')} p={2}>
             <Image
               src="/pimlico.svg"
@@ -284,11 +294,53 @@ export default function Home() {
               height={28}
             />
           </Box>
+          <HStack>
+            <Text>{`References:`}</Text>
+              <Link href="https://github.com/0xjjpa/passkeys-is" isExternal>
+                0xjjpa (Passkeys.is)
+              </Link>
+            
+              <Link href="https://github.com/daimo-eth/p256-verifier" isExternal>
+                Daimo (P256-verifier)
+              </Link>
+            </HStack>
         </Flex>
-        
+        </Container>
       </Flex>
-     
     </Container>
-   
   )
 }
+
+
+const LearnMoreContent = ({isOpen,onClose}:{isOpen:boolean,onClose():void}) => (
+
+  <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+    <ModalOverlay />
+    <ModalContent>
+      <ModalHeader>Learn More</ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        <Stack spacing={3}>
+          <Text mt={4} textAlign={'start'}>
+            {`Passkey X zk account is an ERC-4337 account that incorporates two powerful authorization mechanisms:`}
+          </Text>
+          <OrderedList spacing={2}>
+            <ListItem>
+              <Text as='b'>{`Passkeys with Secp256r1 Signatures:`}</Text>
+              {` Passkeys use Secp256r1 signatures, verified on-chain through the Daimo p256-verifier .`}
+            </ListItem>
+            <ListItem>
+              <Text as='b'>{`zkCommitment Proof for Time-Limited Interactions:`}</Text>
+              {` The account introduces zkCommitment, where a commitment ID is generated for a specific DApp smart contract, such as a Demo NFT contract. This commitment ID, along with a designated time frame, creates a structure reminiscent of a session, similar to the concept commonly found in web2 applications. The account can seamlessly interact with the DApp smart contract by generating a proof for the commitment ID within its validity period. Notably, these interactions occur without the need for additional signature operations using the Passkey, providing both a secure and user-friendly experience.`}
+            </ListItem>
+          </OrderedList>
+        </Stack>
+      </ModalBody>
+      <ModalFooter>
+        <Button colorScheme='red' mr={3} onClick={onClose}>
+          Close
+        </Button>
+      </ModalFooter>
+    </ModalContent>
+  </Modal>
+);
