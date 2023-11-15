@@ -41,8 +41,8 @@ export default function UserProfile() {
       const passkeyXzkAccount = new PasskeyXzkAccount(provider,passkeyId,pubKeyX,pubKeyY)
       await passkeyXzkAccount.initialize()
       const [address,initCode ] = await passkeyXzkAccount.getUserPasskeyZkAccountAddress()
-      logger.info("smart contract account address: ",address)
-      logger.info("smart contract account initcode: ",initCode)
+      logger.debug("smart contract account address: ",address)
+      logger.debug("smart contract account initcode: ",initCode)
     
       const passkeyZkAccountContract = passkeyXzkAccount.getPasskeyZkAccountContract(address)
       const nftContractAddress = getDemoNFTContractAddressByChainId(chainId);
@@ -63,9 +63,9 @@ export default function UserProfile() {
       // const data = mintingCall
       // let callData = passkeyZkAccount.interface.encodeFunctionData("execute", [to, value,data])
 
-      console.log("Generated callData:", callData)
+      logger.debug("Generated callData:", callData)
       const gasPrice = (await provider.getFeeData()).gasPrice
-      logger.info("Gas Price",gasPrice)
+      logger.debug("Gas Price",gasPrice)
 
       
       if (provider == null) throw new Error('must have entryPoint to autofill nonce')
@@ -97,7 +97,7 @@ export default function UserProfile() {
       ])
          
       const paymasterAndData = sponsorUserOperationResult.paymasterAndData
-      console.log(`PaymasterAndData: ${paymasterAndData}`)
+      logger.debug(`PaymasterAndData: ${paymasterAndData}`)
       if (paymasterAndData && session.sessionCommitment){
         
         userOperation.paymasterAndData = paymasterAndData
@@ -115,28 +115,28 @@ export default function UserProfile() {
         const defaultAbiCoder = ethers.AbiCoder.defaultAbiCoder()
         const encodedSessionProof = defaultAbiCoder.encode(['bytes4','address','uint256','uint256[8]'], [sessionMode,nftContractAddress,proofInput[1],hexStrings]);
         userOperation.signature = encodedSessionProof
-        console.log(userOperation)
+        logger.debug(userOperation)
 
         // SUBMIT THE USER OPERATION TO BE BUNDLED
         const userOperationHash = await pimlicoProvider.send("eth_sendUserOperation", [
           userOperation,
           entryPointContractAddress // ENTRY_POINT_ADDRESS
         ])
-        console.log("UserOperation hash:", userOperationHash)
+        logger.debug("UserOperation hash:", userOperationHash)
         // let's also wait for the userOperation to be included, by continually querying for the receipts
-        console.log("Querying for receipts...")
+        logger.debug("Querying for receipts...")
         let receipt = null
         while (receipt === null) {
           await new Promise((resolve) => setTimeout(resolve, 1000))
           receipt = await pimlicoProvider.send("eth_getUserOperationReceipt", [
           userOperationHash,
         ]);
-          console.log(receipt === null ? "Still waiting..." : receipt)
+          logger.debug(receipt === null ? "Still waiting..." : receipt)
         }
 
         const txHash = receipt.receipt.transactionHash
         const blockExplorer = getBlockExplorerURLByChainId(chainId)
-        logger.info(`UserOperation included: ${blockExplorer}/tx/${txHash}`)
+        logger.debug(`UserOperation included: ${blockExplorer}/tx/${txHash}`)
         setSession(session)
         toast({
           title: "Successfully ended session",
@@ -146,11 +146,11 @@ export default function UserProfile() {
           isClosable: true,
         })
         } else {
-        console.log('Invalid PaymasterAndData.');
+        logger.debug('Invalid PaymasterAndData.');
       }  
 
     }}catch(e){
-      console.error(e)
+      logger.error(e)
     }
     setLoading(false)
   }

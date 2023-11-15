@@ -1,4 +1,5 @@
 import { BytesLike } from "ethers"
+import { logger } from "../logger"
 const groth16 = require("snarkjs").groth16
 
 
@@ -81,7 +82,7 @@ export default async function generateProof(
 
 export async function solidityCalldata(_proof:any,_publicSignals:any){
   const calldata = await groth16.exportSolidityCallData(_proof, _publicSignals)
-  console.log(calldata)
+  logger.debug(calldata)
   const argv = calldata
         .replace(/["[\]\s]/g, "")
         .split(",")

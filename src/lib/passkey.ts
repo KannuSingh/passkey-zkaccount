@@ -137,7 +137,7 @@ export class Passkey {
     let jwkKey;
     try {
       jwkKey = await window.crypto.subtle.exportKey('jwk', publicKey);
-      console.log("JWK key :",jwkKey);
+      logger.debug("JWK key :",jwkKey);
     } catch (err) {
       console.error('Failed to export key:', err);
       return;
@@ -180,8 +180,8 @@ export class Passkey {
     }
 
     // if (assertion) {
-      logger.info("(🪪,✅) Assertion", assertion);
-      logger.info({
+      logger.debug("(🪪,✅) Assertion", assertion);
+      logger.debug({
         title: "Assertion obtained.",
         description: "Your assertion has been retrieved.",
         status: "success",
@@ -209,7 +209,7 @@ export class Passkey {
       var {r,s} = this.normalizeSignature(signature)
       const rValue = "0x"+BigInt(r).toString(16)
       const sValue = "0x"+BigInt(s).toString(16)
-      logger.info({ authenticatorData:authenticatorDataString,
+      logger.debug({ authenticatorData:authenticatorDataString,
         requireUserVerification,
         clientDataJson:clientDataJSONString,
         challengeLocation,

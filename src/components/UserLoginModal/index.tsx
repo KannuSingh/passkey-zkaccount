@@ -31,7 +31,7 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
   const handleLogin = async () =>{
     
     try{
-      console.log(usernamePasskeyInfoMap[username])
+      logger.debug(usernamePasskeyInfoMap[username])
       setLoading(true)
       if (usernamePasskeyInfoMap[username] && usernamePasskeyInfoMap[username].publicKeyAsHex) {
         

@@ -66,10 +66,10 @@ export class PasskeyXzkAccount {
                 return Promise.resolve(addr);
             })
  
-            console.log("Calculated sender address:", senderAddress)
+            logger.debug("Calculated sender address:", senderAddress)
             return [senderAddress,initCode]
         }catch(err){
-            console.log(err)
+            logger.error(err)
         }
         return ['','']
     }

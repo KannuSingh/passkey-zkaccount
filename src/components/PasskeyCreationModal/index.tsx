@@ -38,7 +38,7 @@ export default function UserRegistrationModal({ isOpen, onOpen, onClose }:IUserR
       let passkeyInfo:{credentialId?:string,credentialRawId?:string,publicKeyAsHex?:string} = {}
      
       if (credential) {
-        logger.info("(🪪,✅) Credential", credential);
+        logger.debug("(🪪,✅) Credential", credential);
         toast({
           title: "Credential created.",
           description: "Your credential has been created.",
@@ -63,7 +63,7 @@ export default function UserRegistrationModal({ isOpen, onOpen, onClose }:IUserR
           "jwk",
           publicKeyAsCryptoKey
         );
-        logger.info(
+        logger.debug(
           "Public Key as Crypto Key and JWT",
           publicKeyAsCryptoKey,
           exported
