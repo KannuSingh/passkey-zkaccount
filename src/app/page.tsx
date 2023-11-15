@@ -1,95 +1,296 @@
+'use client'
+
 import Image from 'next/image'
-import styles from './page.module.css'
+import { Avatar, Box, Button, ButtonGroup, Container, Divider, Flex, Heading, Icon, Spacer, Stack, Text, createIcon, useColorMode, useColorModeValue, useDisclosure, useToast } from '@chakra-ui/react'
+import UserRegistrationModal from '@/components/PasskeyCreationModal';
+import { MoonIcon, SunIcon } from "@chakra-ui/icons";
+import { Link } from '@chakra-ui/next-js';
+import UserLoginModal from '@/components/UserLoginModal';
+import { logger } from '@/lib/logger';
+import { Passkey } from '@/lib/passkey';
+import { Identity } from "@semaphore-protocol/identity"
+import { PasskeyXzkAccount} from '@/lib/passkeyXzkAccount';
+import { useLocalStorage } from "usehooks-ts";
+import {  Contract, ethers } from "ethers"
+import { getBlockExplorerURLByChainId, getDemoNFTContractAddressByChainId, getEntryPointContractAddressByChainId, getPimlicoChainNameByChainId } from '@/lib/config';
+import { useSession } from '@/hooks/useSession';
+import { formatTime } from '../utils';
+import { getDemoNFTContract } from '@/lib/demoNFT';
+import generateProof from '@/lib/zkSessionAccountProof';
+import UserProfile from '@/components/UserProfile';
 
 export default function Home() {
+  const toast = useToast();
+  const { colorMode, toggleColorMode } = useColorMode()
+  const { isOpen:isOpenRegisterModal, onOpen:onOpenRegisterModal, onClose:onCloseRegisterModal } = useDisclosure()
+  const { isOpen:isOpenLoginModal, onOpen:onOpenLoginModal, onClose:onCloseLoginModal } = useDisclosure()
+  const [usernamePasskeyInfoMap,setUsernamePasskeyInfoMap]= useLocalStorage("usernamePasskeyInfoMap",{})
+  const {session,timeRemaining,identity,username} = useSession()
+
+  const getNonceValue = async (c:Contract) => {
+    let nonceValue = 0;
+    try {
+      nonceValue = await c['getNonce']();
+      
+    } catch (error) {
+      logger.error("Error fetching nonce:", error);
+    }finally{
+      return nonceValue
+    }
+  }
+
+  const handleMint = async () => {
+    try{
+      if (usernamePasskeyInfoMap[username] && usernamePasskeyInfoMap[username].publicKeyAsHex) {
+      const publicKey = Passkey.hex2buf(usernamePasskeyInfoMap[username].publicKeyAsHex);
+
+      const provider = new ethers.JsonRpcProvider('https://goerli.base.org');
+      const metadataFile = 'bafybeifyl3g3wr24zqlxplb37zzxykk6crcl6wbvn7fcpi3rwnnerqzjpm'
+      const publicKeyAsCryptoKey = await Passkey.importPublicKeyAsCryptoKey(  publicKey );
+      
+      const [pubKeyX,pubKeyY] = await Passkey.getPublicKeyXYCoordinate(publicKeyAsCryptoKey)
+      const passkeyId = ethers.encodeBytes32String("someIdentifier");
+      const chainId = '0x14a33' //"0x"+BigInt((await provider.getNetwork()).chainId).toString(16)
+      const passkeyXzkAccount = new PasskeyXzkAccount(provider,passkeyId,pubKeyX,pubKeyY)
+      await passkeyXzkAccount.initialize()
+      const [address,initCode ] = await passkeyXzkAccount.getUserPasskeyZkAccountAddress()
+      logger.info("smart contract account address: ",address)
+      logger.info("smart contract account initcode: ",initCode)
+    
+      const passkeyZkAccount = passkeyXzkAccount.getPasskeyZkAccountContract(address)
+      const nftContractAddress = getDemoNFTContractAddressByChainId(chainId);
+      // Prepare calldata to mint NFT
+      const to =  nftContractAddress!;
+      const value = ethers.parseEther('0')
+      const demoNFTContracts = getDemoNFTContract(nftContractAddress!,provider) 
+      const mintingCall = demoNFTContracts.interface.encodeFunctionData("mintNFT",[address,metadataFile])
+      const data = mintingCall
+      let callData = passkeyZkAccount.interface.encodeFunctionData("execute", [to, value,data])
+      console.log("Generated callData:", callData)
+      const gasPrice = (await provider.getFeeData()).gasPrice
+      logger.info("Gas Price",gasPrice)
+
+      
+      if (provider == null) throw new Error('must have entryPoint to autofill nonce')
+      const c = new Contract(address, [`function getNonce() view returns(uint256)`], provider)
+      const nonceValue = await getNonceValue(c)
+      const chain = getPimlicoChainNameByChainId(chainId) // find the list of chain names on the Pimlico verifying paymaster reference page
+      const apiKey = process.env.NEXT_PUBLIC_PIMLICO_API_KEY
+      const pimlicoEndpoint = `https://api.pimlico.io/v1/${chain}/rpc?apikey=${apiKey}`
+      const pimlicoProvider = new ethers.JsonRpcProvider(pimlicoEndpoint,null,{staticNetwork:await provider.getNetwork()})
+      const entryPointContractAddress = getEntryPointContractAddressByChainId(chainId)!// '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789'
+      const userOperation = {
+        sender: address,
+        nonce:"0x"+nonceValue.toString(16),
+        initCode:nonceValue === 0?initCode:'0x',
+        callData,
+        callGasLimit: "0x"+BigInt(2000000).toString(16), // hardcode it for now at a high value
+        verificationGasLimit: "0x"+BigInt(2000000).toString(16), // hardcode it for now at a high value
+        preVerificationGas: "0x"+BigInt(2000000).toString(16), // hardcode it for now at a high value
+        maxFeePerGas: "0x"+gasPrice.toString(16),
+        maxPriorityFeePerGas: "0x"+gasPrice.toString(16),
+        paymasterAndData: "0x",
+        signature: "0x"
+      }
+      const sponsorUserOperationResult = await pimlicoProvider.send("pm_sponsorUserOperation", [
+        userOperation,
+        {
+          entryPoint: entryPointContractAddress,
+        },
+      ])
+         
+      const paymasterAndData = sponsorUserOperationResult.paymasterAndData
+      console.log(`PaymasterAndData: ${paymasterAndData}`)
+      if (paymasterAndData && session.sessionCommitment){
+        const savedIdentity = new Identity(identity);
+        userOperation.paymasterAndData = paymasterAndData
+        const userOpHash = await passkeyXzkAccount._entryPoint.getUserOpHash(userOperation)
+        const nullifier = savedIdentity.nullifier;
+        const trapdoor = savedIdentity.trapdoor;
+        const externalNullifier =  BigInt(userOpHash) >> BigInt(8) //BigInt(solidityKeccak256(['bytes'],[calldataHash])) >> BigInt(8)
+        const {proof,publicSignals} = await generateProof(trapdoor,nullifier,externalNullifier)
+        const sessionProof: any[8] = proof
+        const proofInput: any[3] = publicSignals
+        const argv = sessionProof.map((x:any) => BigInt(x))
+        const hexStrings = argv.map((n:BigInt) => '0x' + n.toString(16));
+        const sessionMode = '0x00000001' // '0x00000001' for session mode, '0x00000000' for direct signature mode
+        // Encode the array of hex strings
+        const defaultAbiCoder = ethers.AbiCoder.defaultAbiCoder()
+        const encodedSessionProof = defaultAbiCoder.encode(['bytes4','address','uint256','uint256[8]'], [sessionMode,nftContractAddress,proofInput[1],hexStrings]);
+        userOperation.signature = encodedSessionProof
+        console.log(userOperation)
+
+        // SUBMIT THE USER OPERATION TO BE BUNDLED
+        const userOperationHash = await pimlicoProvider.send("eth_sendUserOperation", [
+          userOperation,
+          entryPointContractAddress // ENTRY_POINT_ADDRESS
+        ])
+        console.log("UserOperation hash:", userOperationHash)
+        // let's also wait for the userOperation to be included, by continually querying for the receipts
+        console.log("Querying for receipts...")
+        let receipt = null
+        while (receipt === null) {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          receipt = await pimlicoProvider.send("eth_getUserOperationReceipt", [
+          userOperationHash,
+        ]);
+          console.log(receipt === null ? "Still waiting..." : receipt)
+        }
+
+        const txHash = receipt.receipt.transactionHash
+        const blockExplorer = getBlockExplorerURLByChainId(chainId)
+        logger.info(`UserOperation included: ${blockExplorer}/tx/${txHash}`)
+        toast({
+          title: "Successfully minted DEMO NFT",
+          description: "",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        })
+        } else {
+        console.log('Invalid PaymasterAndData.');
+      }  
+
+    }}catch(e){
+      console.error(e)
+    }
+   
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <Container maxW='6xl'>
+      {/* Nav bar */}
+      <Flex minWidth='max-content' p={2} alignItems='center' gap='2'>
+        <Box py='2'>
+          <Heading size='md' fontFamily={"monospace"}>Passkey X zkAccount</Heading>
+        </Box>
+        <Spacer />
+        {timeRemaining
+          && <>
+            <Text>
+              {formatTime(timeRemaining)}
+            </Text>
+            <UserProfile/>
+          </>
+        }
+        
+        
+        <Button onClick={toggleColorMode}>
+          {colorMode === "light" ? <MoonIcon /> : <SunIcon color="icon"/>}
+        </Button>
+      </Flex>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      <Divider orientation='horizontal' />
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
+      {/* body */}
+      <Flex direction={"column"} minH={"100vh"} p={2}  >
+        <Container maxW={'3xl'}>
+          <Stack
+            as={Box}
+            textAlign={'center'}
+            spacing={{ base: 8, md: 14 }}
+            py={{ base: 20, md: 36 }}>
+            <Heading
+              fontWeight={600}
+              fontSize={{ base: '2xl', sm: '4xl', md: '6xl' }}
+              lineHeight={'110%'}>
+              Passkey{" "}
+              <Text as={'span'} color={'green.400'}>
+                X{" "}
+              </Text>
+              zkAccount
+            </Heading>
+            
+            <Text color={'gray.500'}>
+              {`Utilizing zero-knowledge proofs in session-based access control mechanisms can provide a robust solution for achieving a harmonious blend of user security and a frictionless user experience.`}
+              {`This application serves as an example demonstrating a zk session-based smart contract account, eliminating the need for third-party involvement. `}
+            </Text>
+            {session  
+              ?<Stack
+                direction={'column'}
+                spacing={3}
+                align={'center'}
+                alignSelf={'center'}
+                position={'relative'}>
+                  <Button
+                    colorScheme={'green'}
+                    bg={'green.400'}
+                    rounded={'full'}
+                    px={6}
+                    onClick={handleMint}
+                    _hover={{
+                      bg: 'green.500',
+                    }}>
+                    MintNFT
+                  </Button>
+              </Stack>
+              :<Stack
+                direction={'column'}
+                spacing={3}
+                align={'center'}
+                alignSelf={'center'}
+                position={'relative'}>
+                  <Stack direction={"row"}>
+                    <Button colorScheme={'green'}  bg={'green.400'}
+                      rounded={'full'} px={6} onClick={onOpenRegisterModal} 
+                      _hover={{  bg: 'green.500', }}>
+                      Create Passkey
+                    </Button>
+                    {/* <Button colorScheme={'green'}  bg={'green.400'}
+                      rounded={'full'} px={6}
+                      onClick={handlePasskeyAccountCreation}
+                      _hover={{ bg: 'green.500', }}>
+                      Sign up
+                    </Button> */}
+                    <Button
+                      colorScheme={'green'}
+                      bg={'green.400'}
+                      rounded={'full'}
+                      px={6}
+                      onClick={onOpenLoginModal}
+                      _hover={{
+                        bg: 'green.500',
+                      }}>
+                      Login w/Passkey
+                    </Button>
+                  </Stack>
+                  <Button variant={'link'} colorScheme={'blue'} size={'sm'}>
+                  Learn more
+                </Button>
+              </Stack>
+            }
+          </Stack>
+          <UserRegistrationModal isOpen={isOpenRegisterModal} onOpen={onOpenRegisterModal} onClose={onCloseRegisterModal} />
+          <UserLoginModal isOpen={isOpenLoginModal} onOpen={onOpenLoginModal} onClose={onCloseLoginModal} />
+        </Container>
+        
+        
+        
+        {/* footer */} 
+        <Flex direction={"column"} alignItems={"center"} gap={2}>
+          <p className="text-sm mb-4 text-center" >
+            {`Feel free to explore it and don't hesitate to reach out to `}
+            <span className="font-bold">@kdsinghsaini</span>
+            {` on Telegram or Twitter for any feedback.`}
           </p>
-        </a>
-      </div>
-    </main>
+          <p> Sponsored By{' '}
+            <Link href="https://www.pimlico.io" color='blue.400' _hover={{ color: 'blue.500' }}>
+              Pimlico
+            </Link>
+          </p>
+          <Box bgColor={useColorModeValue('gray.800', '')} p={2}>
+            <Image
+              src="/pimlico.svg"
+              alt="Pimlico Logo"
+              width={116}
+              height={28}
+            />
+          </Box>
+        </Flex>
+        
+      </Flex>
+     
+    </Container>
+   
   )
 }
