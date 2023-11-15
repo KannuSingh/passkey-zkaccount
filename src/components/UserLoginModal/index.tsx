@@ -26,45 +26,13 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
   const {setSession, setIdentity,setUserAddress,setUsername:setSessionUsername} = useSession();
   const [usernamePasskeyInfoMap,setUsernamePasskeyInfoMap]= useLocalStorage("usernamePasskeyInfoMap",{})
   const [username,setUsername]= useState('')
-
- 
-  // // Load remembered settings from localStorage on component mount
-  // useEffect(() => {
-  //   const rememberedSettings = localStorage.getItem('rememberedSettings');
-  //   if (rememberedSettings) {
-  //     const { sessionTimeInterval, paymasterProvider } = JSON.parse(rememberedSettings);
-  //     setSessionTimeInterval(sessionTimeInterval);
-  //     setPaymasterProvider(paymasterProvider);
-  //   }
-  // }, []);
-
-  // // Save settings to localStorage when they change
-  // useEffect(() => {
-  //   if (rememberSettings) {
-  //     const settingsToRemember = JSON.stringify({
-  //       sessionTimeInterval,
-  //       paymasterProvider,
-  //     });
-  //     localStorage.setItem('rememberedSettings', settingsToRemember);
-  //   }
-  // }, [sessionTimeInterval, paymasterProvider, rememberSettings]);
-
-  // const saveSettingsToLocalStorage = () => {
-  //   if (rememberSettings) {
-  //     const settingsToRemember = JSON.stringify({
-  //       sessionTimeInterval,
-  //       paymasterProvider,
-  //     });
-  //     localStorage.setItem('rememberedSettings', settingsToRemember);
-  //   }
-  // };
-
+  const [isLoading,setLoading] = useState(false)
 
   const handleLogin = async () =>{
     
     try{
       console.log(usernamePasskeyInfoMap[username])
-
+      setLoading(true)
       if (usernamePasskeyInfoMap[username] && usernamePasskeyInfoMap[username].publicKeyAsHex) {
         
         const publicKey = Passkey.hex2buf(usernamePasskeyInfoMap[username].publicKeyAsHex);
@@ -220,15 +188,16 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
             });
           logger.error('Error retrieving gas fee sponsorship from paymaster.');
         }
-      }  
+      } 
     }catch(e){
       toast({ title: "Some error occurred.",
         description:"", status: "error",
         duration: 9000,  isClosable: true,
       });
+      
       console.error(e)
     }
-    // saveSettingsToLocalStorage()
+    setLoading(false) 
   }
   
   return (
@@ -245,7 +214,7 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
             <RadioGroup value={paymasterProvider} onChange={(value) => setPaymasterProvider(value)}>
               <HStack spacing='24px'>
                 <Radio value='Pimlico'>Pimlico</Radio>
-                <Radio value='Other'>Other</Radio>
+                <Radio disabled value='Other'>Other</Radio>
               </HStack>
             </RadioGroup>
             <FormHelperText>{`Select other if you've a one.`}</FormHelperText>
@@ -275,7 +244,10 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
           <Button colorScheme='red' mr={3} onClick={onClose}>
             Close
           </Button>
-          <Button isDisabled={username.trim()===''} onClick={handleLogin} colorScheme='green'>Login</Button>
+          <Button isDisabled={username.trim()===''} 
+            onClick={handleLogin} colorScheme='green'
+            isLoading={isLoading}
+            >Login</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Avatar, Button, Center, HStack, Icon, Popover, PopoverArrow, PopoverBody, PopoverContent, PopoverFooter, PopoverHeader, PopoverTrigger, Portal, Text, VStack, useBoolean, useColorModeValue } from "@chakra-ui/react";
+import { Avatar, Button, Center, HStack, Icon, Popover, PopoverArrow, PopoverBody, PopoverContent, PopoverFooter, PopoverHeader, PopoverTrigger, Portal, Text, Tooltip, VStack, useBoolean, useClipboard, useColorModeValue } from "@chakra-ui/react";
 import { FaCheckCircle, FaChevronDown, FaChevronRight, FaChevronUp, FaCopy, FaPowerOff, FaRedo } from "react-icons/fa"
 import { FiBell, FiMenu } from "react-icons/fi"
 import { BiWalletAlt } from "react-icons/bi"
@@ -14,9 +14,13 @@ export default function UserProfile() {
   const [ethBalance,setEthBalance] = useState('0')
   const _portalBg = useColorModeValue("white", "gray.900")
 	const _portalBorderBg = useColorModeValue("gray.200", "gray.700")
-
+  const { onCopy, value, setValue:setWalletAddress, hasCopied } = useClipboard("");
   const handleDisconnect = () => {
 
+  }
+  const handleCopyWalletAddress = () => {
+    setWalletAddress(userAddress)
+    onCopy()
   }
 
   return (
@@ -51,9 +55,12 @@ export default function UserProfile() {
                 </Text>
               </HStack>
               <HStack spacing="1">
-                <Button size="sm">
+              <Tooltip hasArrow label={hasCopied?'Copied':'Copy'} >
+                <Button size="sm" onClick={handleCopyWalletAddress}>
                   <Icon w={3} h={3} as={FaCopy} />
                 </Button>
+              </Tooltip>
+                
                 <Button
                   onClick={handleDisconnect}
                   colorScheme="red"

@@ -37,7 +37,9 @@ export const getNonceValue = async (c:Contract) => {
 }
 
 export function formatAddress(address:string){
-  return `${address.toString().substring(0, 6)}...${address.toString().substring(38)}`
+  if(address && address.length > 10)
+    return `${address.toString().substring(0, 6)}...${address.toString().substring(38)}`
+  return address
 }
 
 // const handlePasskeyAccountCreation = async () =>{
