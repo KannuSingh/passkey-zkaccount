@@ -72,11 +72,6 @@
       {
         "components": [
           {
-            "internalType": "bytes32",
-            "name": "id",
-            "type": "bytes32"
-          },
-          {
             "internalType": "uint256",
             "name": "pubKeyX",
             "type": "uint256"
@@ -85,6 +80,11 @@
             "internalType": "uint256",
             "name": "pubKeyY",
             "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "credentialId",
+            "type": "bytes"
           }
         ],
         "indexed": true,
@@ -114,11 +114,6 @@
     "name": "_signer",
     "outputs": [
       {
-        "internalType": "bytes32",
-        "name": "id",
-        "type": "bytes32"
-      },
-      {
         "internalType": "uint256",
         "name": "pubKeyX",
         "type": "uint256"
@@ -127,6 +122,11 @@
         "internalType": "uint256",
         "name": "pubKeyY",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "credentialId",
+        "type": "bytes"
       }
     ],
     "stateMutability": "view",
@@ -263,11 +263,6 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "id",
-        "type": "bytes32"
-      },
-      {
         "internalType": "uint256",
         "name": "pubKeyX",
         "type": "uint256"
@@ -276,6 +271,11 @@
         "internalType": "uint256",
         "name": "pubKeyY",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "credentialId",
+        "type": "bytes"
       }
     ],
     "name": "initialize",
@@ -396,6 +396,56 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "challengeLocation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "responseTypeLocation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "r",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "s",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "requireUserVerification",
+            "type": "bool"
+          },
+          {
+            "internalType": "bytes",
+            "name": "authenticatorData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "string",
+            "name": "clientDataJSON",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct IPasskeyAccount.PasskeySigData",
+        "name": "sig",
+        "type": "tuple"
+      }
+    ],
+    "name": "passkeySignatureStruct",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "proxiableUUID",
     "outputs": [
@@ -406,6 +456,36 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "application",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nullifierHash",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256[8]",
+            "name": "values",
+            "type": "uint256[8]"
+          }
+        ],
+        "internalType": "struct PasskeyZkAccount.SessionSignatureProof",
+        "name": "sig",
+        "type": "tuple"
+      }
+    ],
+    "name": "sessionSignatureProofStruct",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

@@ -31,11 +31,6 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "id",
-        "type": "bytes32"
-      },
-      {
         "internalType": "uint256",
         "name": "pubKeyX",
         "type": "uint256"
@@ -49,6 +44,11 @@
         "internalType": "uint256",
         "name": "salt",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "credentialId",
+        "type": "bytes"
       }
     ],
     "name": "createAccount",
@@ -65,11 +65,6 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "id",
-        "type": "bytes32"
-      },
-      {
         "internalType": "uint256",
         "name": "pubKeyX",
         "type": "uint256"
@@ -83,9 +78,14 @@
         "internalType": "uint256",
         "name": "salt",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "credentialId",
+        "type": "bytes"
       }
     ],
-    "name": "getAddress",
+    "name": "getCounterfactualAddress",
     "outputs": [
       {
         "internalType": "address",

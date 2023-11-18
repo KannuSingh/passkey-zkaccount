@@ -18,7 +18,7 @@ export const config: Config = {
     name: 'Goerli Base',
     entryPointContractAddress:'0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789',
     demoNFTContractAddress:'0xC29413bfbF9773DbC45Cc9C8A82b0d89f66Fe83F',
-    passkeyZkAccountFactory:'0x1DFb3Fc1155D4564FEfcf3d1b67cDdc2C2867f22',
+    passkeyZkAccountFactory: '0x022bD598De02952104708657a3d1219596bb6aE1', //'0x1DFb3Fc1155D4564FEfcf3d1b67cDdc2C2867f22',
     symbol: 'BaseETH',
     pimlicoChainValue:'base-goerli',
     blockExplorer: 'https://goerli.basescan.org',

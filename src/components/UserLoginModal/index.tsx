@@ -39,7 +39,7 @@ export default function UserLoginModal({ isOpen, onOpen, onClose }:IUserLoginMod
         const publicKeyAsCryptoKey = await Passkey.importPublicKeyAsCryptoKey(  publicKey );
         
         const [pubKeyX,pubKeyY] = await Passkey.getPublicKeyXYCoordinate(publicKeyAsCryptoKey)
-        const passkeyId = ethers.encodeBytes32String("someIdentifier");
+        const passkeyId = ethers.toUtf8Bytes(usernamePasskeyInfoMap[username].credentialId)
         
         const sessionStartTime = new Date(Date.now());
         const sessionEndTime = (new Date( Date.now() + sessionTimeInterval*60*1000))

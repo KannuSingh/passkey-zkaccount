@@ -36,7 +36,9 @@ export default function UserProfile() {
       const publicKeyAsCryptoKey = await Passkey.importPublicKeyAsCryptoKey(  publicKey );
       
       const [pubKeyX,pubKeyY] = await Passkey.getPublicKeyXYCoordinate(publicKeyAsCryptoKey)
-      const passkeyId = ethers.encodeBytes32String("someIdentifier");
+      
+const passkeyId = ethers.toUtf8Bytes(usernamePasskeyInfoMap[username].credentialId)
+
       const chainId = '0x14a33' //"0x"+BigInt((await provider.getNetwork()).chainId).toString(16)
       const passkeyXzkAccount = new PasskeyXzkAccount(provider,passkeyId,pubKeyX,pubKeyY)
       await passkeyXzkAccount.initialize()

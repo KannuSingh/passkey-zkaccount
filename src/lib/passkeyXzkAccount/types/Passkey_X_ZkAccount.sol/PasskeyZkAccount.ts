@@ -21,7 +21,7 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./../common";
+} from "../common";
 
 export type UserOperationStruct = {
   sender: AddressLike;
@@ -65,16 +65,16 @@ export type UserOperationStructOutput = [
 
 export declare namespace IPasskeyAccount {
   export type PasskeyStruct = {
-    id: BytesLike;
     pubKeyX: BigNumberish;
     pubKeyY: BigNumberish;
+    credentialId: BytesLike;
   };
 
   export type PasskeyStructOutput = [
-    id: string,
     pubKeyX: bigint,
-    pubKeyY: bigint
-  ] & { id: string; pubKeyX: bigint; pubKeyY: bigint };
+    pubKeyY: bigint,
+    credentialId: string
+  ] & { pubKeyX: bigint; pubKeyY: bigint; credentialId: string };
 
   export type PasskeySigDataStruct = {
     challengeLocation: BigNumberish;
@@ -195,7 +195,7 @@ export interface PasskeyZkAccountInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [BytesLike, BigNumberish, BigNumberish]
+    values: [BigNumberish, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC1155BatchReceived",
@@ -443,10 +443,10 @@ export interface PasskeyZkAccount extends BaseContract {
   _signer: TypedContractMethod<
     [],
     [
-      [string, bigint, bigint] & {
-        id: string;
+      [bigint, bigint, string] & {
         pubKeyX: bigint;
         pubKeyY: bigint;
+        credentialId: string;
       }
     ],
     "view"
@@ -479,7 +479,7 @@ export interface PasskeyZkAccount extends BaseContract {
   >;
 
   initialize: TypedContractMethod<
-    [id: BytesLike, pubKeyX: BigNumberish, pubKeyY: BigNumberish],
+    [pubKeyX: BigNumberish, pubKeyY: BigNumberish, credentialId: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -593,10 +593,10 @@ export interface PasskeyZkAccount extends BaseContract {
   ): TypedContractMethod<
     [],
     [
-      [string, bigint, bigint] & {
-        id: string;
+      [bigint, bigint, string] & {
         pubKeyX: bigint;
         pubKeyY: bigint;
+        credentialId: string;
       }
     ],
     "view"
@@ -637,7 +637,7 @@ export interface PasskeyZkAccount extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [id: BytesLike, pubKeyX: BigNumberish, pubKeyY: BigNumberish],
+    [pubKeyX: BigNumberish, pubKeyY: BigNumberish, credentialId: BytesLike],
     [void],
     "nonpayable"
   >;

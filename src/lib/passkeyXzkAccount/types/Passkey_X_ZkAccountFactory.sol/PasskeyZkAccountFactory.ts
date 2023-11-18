@@ -18,7 +18,7 @@ import type {
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "./../common";
+} from "../common";
 
 export interface PasskeyZkAccountFactoryInterface extends Interface {
   getFunction(
@@ -34,11 +34,11 @@ export interface PasskeyZkAccountFactoryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createAccount",
-    values: [BytesLike, BigNumberish, BigNumberish, BigNumberish]
+    values: [BigNumberish, BigNumberish, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getCounterfactualAddress",
-    values: [BytesLike, BigNumberish, BigNumberish, BigNumberish]
+    values: [BigNumberish, BigNumberish, BigNumberish, BytesLike]
   ): string;
 
   decodeFunctionResult(
@@ -102,10 +102,10 @@ export interface PasskeyZkAccountFactory extends BaseContract {
 
   createAccount: TypedContractMethod<
     [
-      id: BytesLike,
       pubKeyX: BigNumberish,
       pubKeyY: BigNumberish,
-      salt: BigNumberish
+      salt: BigNumberish,
+      credentialId: BytesLike
     ],
     [string],
     "nonpayable"
@@ -113,10 +113,10 @@ export interface PasskeyZkAccountFactory extends BaseContract {
 
   getCounterfactualAddress: TypedContractMethod<
     [
-      id: BytesLike,
       pubKeyX: BigNumberish,
       pubKeyY: BigNumberish,
-      salt: BigNumberish
+      salt: BigNumberish,
+      credentialId: BytesLike
     ],
     [string],
     "view"
@@ -133,10 +133,10 @@ export interface PasskeyZkAccountFactory extends BaseContract {
     nameOrSignature: "createAccount"
   ): TypedContractMethod<
     [
-      id: BytesLike,
       pubKeyX: BigNumberish,
       pubKeyY: BigNumberish,
-      salt: BigNumberish
+      salt: BigNumberish,
+      credentialId: BytesLike
     ],
     [string],
     "nonpayable"
@@ -145,10 +145,10 @@ export interface PasskeyZkAccountFactory extends BaseContract {
     nameOrSignature: "getCounterfactualAddress"
   ): TypedContractMethod<
     [
-      id: BytesLike,
       pubKeyX: BigNumberish,
       pubKeyY: BigNumberish,
-      salt: BigNumberish
+      salt: BigNumberish,
+      credentialId: BytesLike
     ],
     [string],
     "view"

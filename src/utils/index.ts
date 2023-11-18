@@ -48,7 +48,9 @@ export function formatAddress(address:string){
 //     const publicKeyAsCryptoKey = await Passkey.importPublicKeyAsCryptoKey(  publicKey );
     
 //     const [pubKeyX,pubKeyY] = await Passkey.getPublicKeyXYCoordinate(publicKeyAsCryptoKey)
-//     const passkeyId = ethers.encodeBytes32String("someIdentifier");
+//     
+//const passkeyId = ethers.toUtf8Bytes(usernamePasskeyInfoMap[username].credentialId)
+
     
 //     const provider = new ethers.JsonRpcProvider('https://goerli.base.org');
 //     const passkeyXzkAccount = new PasskeyXzkAccount(provider,passkeyId,pubKeyX,pubKeyY)

@@ -17,7 +17,7 @@ export class PasskeyXzkAccount {
     _signerOrProvider: ethers.Provider | ethers.Signer
     _pubKeyX:string
     _pubKeyY:string
-    _passKeyId:string
+    _passKeyId:string|Uint8Array
     _passkeyZkAccountFactoryAddress: string
     _passkeyZkAccountFactory: PasskeyZkAccountFactory;
 
@@ -25,7 +25,7 @@ export class PasskeyXzkAccount {
      * @notice Create PaymasterApplicationsRegistry instance to interact with
      * @param signerOrProvider signer or provider to use
      */
-    constructor(signerOrProvider: ethers.Provider | ethers.Signer, passkeyId:string, pubKeyX:string,pubKeyY:string ) {
+    constructor(signerOrProvider: ethers.Provider | ethers.Signer, passkeyId:string|Uint8Array, pubKeyX:string,pubKeyY:string ) {
         this._pubKeyX = pubKeyX
         this._pubKeyY = pubKeyY
         this._passKeyId = passkeyId
@@ -45,11 +45,12 @@ export class PasskeyXzkAccount {
         }
     }
     async getUserPasskeyZkAccountAddress(): Promise<[address:string,initCode:string]>  {
-        logger.debug(this._passkeyZkAccountFactory)
+        logger.debug("PasskeyZkAccountFactory: ",this._passkeyZkAccountFactory)
+        logger.debug([this._pubKeyX,this._pubKeyY, 0,this._passKeyId])
         try{
             const initCode = ethers.concat([
                 this._passkeyZkAccountFactoryAddress,
-                this._passkeyZkAccountFactory.interface.encodeFunctionData("createAccount", [this._passKeyId,this._pubKeyX,this._pubKeyY, 0]),
+                this._passkeyZkAccountFactory.interface.encodeFunctionData("createAccount", [this._pubKeyX,this._pubKeyY, 0,this._passKeyId]),
             ])
             
             // CALCULATE THE SENDER ADDRESS
